@@ -166,6 +166,10 @@ data MessageTag = ErrorResponse
                 | SetBucketResponse
                 | MapReduceRequest
                 | MapReduceResponse
+                | IndexRequest
+                | IndexResponse
+                | SearchQueryRequest
+                | SearchQueryResponse
                   deriving (Eq, Show, Enum, Typeable)
 
 -- | Messages are tagged.

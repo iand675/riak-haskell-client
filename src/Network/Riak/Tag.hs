@@ -27,6 +27,8 @@ import Network.Riak.Protocol.GetClientIDResponse
 import Network.Riak.Protocol.GetRequest
 import Network.Riak.Protocol.GetResponse
 import Network.Riak.Protocol.GetServerInfoRequest
+import Network.Riak.Protocol.IndexRequest
+import Network.Riak.Protocol.IndexResponse
 import Network.Riak.Protocol.ListBucketsRequest
 import Network.Riak.Protocol.ListBucketsResponse
 import Network.Riak.Protocol.ListKeysRequest
@@ -36,6 +38,8 @@ import Network.Riak.Protocol.MapReduceRequest
 import Network.Riak.Protocol.PingRequest
 import Network.Riak.Protocol.PutRequest
 import Network.Riak.Protocol.PutResponse
+import Network.Riak.Protocol.SearchQueryRequest
+import Network.Riak.Protocol.SearchQueryResponse
 import Network.Riak.Protocol.ServerInfo
 import Network.Riak.Protocol.SetBucketRequest
 import Network.Riak.Protocol.SetClientIDRequest
@@ -205,6 +209,38 @@ instance Tagged MapReduce where
 instance Response MapReduce
 
 instance Exchange MapReduceRequest MapReduce
+
+instance Tagged IndexRequest where
+    messageTag _ = Types.IndexRequest
+    {-# INLINE messageTag #-}
+
+instance Tagged IndexResponse where
+    messageTag _ = Types.IndexResponse
+    {-# INLINE messageTag #-}
+
+instance Request IndexRequest where
+    expectedResponse _ = Types.IndexResponse
+    {-# INLINE expectedResponse #-}
+
+instance Response IndexResponse
+
+instance Exchange IndexRequest IndexResponse
+
+instance Tagged SearchQueryRequest where
+    messageTag _ = Types.SearchQueryRequest
+    {-# INLINE messageTag #-}
+
+instance Tagged SearchQueryResponse where
+    messageTag _ = Types.SearchQueryResponse
+    {-# INLINE messageTag #-}
+
+instance Request SearchQueryRequest where
+    expectedResponse _ = Types.SearchQueryResponse
+    {-# INLINE expectedResponse #-}
+
+instance Response SearchQueryResponse
+
+instance Exchange SearchQueryRequest SearchQueryResponse
 
 putTag :: MessageTag -> Put
 putTag = putWord8 . fromIntegral . fromEnum
