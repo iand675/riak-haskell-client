@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
 module Network.Riak.Protocol.GetClientIDRequest (GetClientIDRequest(..)) where
 import Prelude ((+), (/))

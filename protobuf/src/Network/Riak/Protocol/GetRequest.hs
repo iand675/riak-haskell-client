@@ -4,13 +4,14 @@ module Network.Riak.Protocol.GetRequest (GetRequest(..)) where
 import Prelude ((+), (/))
 import qualified Prelude as Prelude'
 import qualified Data.Typeable as Prelude'
+import qualified Data.Data as Prelude'
 import qualified Text.ProtocolBuffers.Header as P'
  
 data GetRequest = GetRequest{bucket :: !P'.ByteString, key :: !P'.ByteString, r :: !(P'.Maybe P'.Word32),
                              pr :: !(P'.Maybe P'.Word32), basic_quorum :: !(P'.Maybe P'.Bool), notfound_ok :: !(P'.Maybe P'.Bool),
                              if_modified :: !(P'.Maybe P'.ByteString), head :: !(P'.Maybe P'.Bool),
                              deletedvclock :: !(P'.Maybe P'.Bool)}
-                deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable)
+                deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable, Prelude'.Data)
  
 instance P'.Mergeable GetRequest where
   mergeAppend (GetRequest x'1 x'2 x'3 x'4 x'5 x'6 x'7 x'8 x'9) (GetRequest y'1 y'2 y'3 y'4 y'5 y'6 y'7 y'8 y'9)

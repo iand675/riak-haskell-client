@@ -4,12 +4,13 @@ module Network.Riak.Protocol.DeleteRequest (DeleteRequest(..)) where
 import Prelude ((+), (/))
 import qualified Prelude as Prelude'
 import qualified Data.Typeable as Prelude'
+import qualified Data.Data as Prelude'
 import qualified Text.ProtocolBuffers.Header as P'
  
 data DeleteRequest = DeleteRequest{bucket :: !P'.ByteString, key :: !P'.ByteString, rw :: !(P'.Maybe P'.Word32),
                                    vclock :: !(P'.Maybe P'.ByteString), r :: !(P'.Maybe P'.Word32), w :: !(P'.Maybe P'.Word32),
                                    pr :: !(P'.Maybe P'.Word32), pw :: !(P'.Maybe P'.Word32), dw :: !(P'.Maybe P'.Word32)}
-                   deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable)
+                   deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable, Prelude'.Data)
  
 instance P'.Mergeable DeleteRequest where
   mergeAppend (DeleteRequest x'1 x'2 x'3 x'4 x'5 x'6 x'7 x'8 x'9) (DeleteRequest y'1 y'2 y'3 y'4 y'5 y'6 y'7 y'8 y'9)
