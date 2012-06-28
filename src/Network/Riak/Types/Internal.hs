@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable, FunctionalDependencies, MultiParamTypeClasses, 
-    RecordWildCards #-}
+    RecordWildCards, BangPatterns #-}
 
 -- |
 -- Module:      Network.Riak.Types.Internal
@@ -27,6 +27,8 @@ module Network.Riak.Types.Internal
     , Bucket
     , Key
     , Tag
+    , PutInfo
+    , PutResult(..)
     , VClock(..)
     , Job(..)
     -- * Quorum management
@@ -53,7 +55,9 @@ import Data.Typeable (Typeable)
 import Data.Word (Word32)
 import Network.Socket (HostName, ServiceName, Socket)
 import Text.ProtocolBuffers (ReflectDescriptor, Wire)
-    
+
+type PutInfo = Maybe (Key, Maybe VClock)
+
 -- | A client identifier.  This is used by the Riak cluster when
 -- logging vector clock changes, and should be unique for each client.
 type ClientID = ByteString
@@ -194,6 +198,10 @@ instance (Tagged a, Tagged b) => Tagged (Either a b) where
     messageTag (Left l)  = messageTag l
     messageTag (Right r) = messageTag r
     {-# INLINE messageTag #-}
+
+data PutResult a = PutResult { result :: !a
+                             , vclock :: !(Maybe VClock)
+                             , key :: !(Maybe Key) } deriving (Eq, Typeable)
 
 -- | A wrapper that keeps Riak vector clocks opaque.
 newtype VClock = VClock {

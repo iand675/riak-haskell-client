@@ -102,8 +102,8 @@ modify_ = R.modify_ J.get J.put
 -- conflict resolution loop, it will throw a 'ResolutionFailure'
 -- exception.
 put :: (FromJSON c, ToJSON c, Resolvable c) =>
-       Connection -> Bucket -> Key -> Maybe VClock -> c -> W -> DW
-    -> IO (c, VClock)
+       Connection -> Bucket -> PutInfo -> c -> W -> DW
+    -> IO (PutResult c)
 put = R.put J.put
 {-# INLINE put #-}
 
@@ -120,7 +120,7 @@ put = R.put J.put
 -- conflict resolution loop, it will throw a 'ResolutionFailure'
 -- exception.
 put_ :: (FromJSON c, ToJSON c, Resolvable c) =>
-        Connection -> Bucket -> Key -> Maybe VClock -> c -> W -> DW
+        Connection -> Bucket -> PutInfo -> c -> W -> DW
      -> IO ()
 put_ = R.put_ J.put
 {-# INLINE put_ #-}
@@ -140,8 +140,8 @@ put_ = R.put_ J.put
 -- If this function gives up due to apparently being stuck in a loop,
 -- it will throw a 'ResolutionFailure' exception.
 putMany :: (FromJSON c, ToJSON c, Resolvable c) =>
-           Connection -> Bucket -> [(Key, Maybe VClock, c)] -> W -> DW
-        -> IO [(c, VClock)]
+           Connection -> Bucket -> [(PutInfo, c)] -> W -> DW
+        -> IO [PutResult c]
 putMany = R.putMany J.putMany
 {-# INLINE putMany #-}
 
@@ -157,7 +157,7 @@ putMany = R.putMany J.putMany
 -- If this function gives up due to apparently being stuck in a loop,
 -- it will throw a 'ResolutionFailure' exception.
 putMany_ :: (FromJSON c, ToJSON c, Resolvable c) =>
-            Connection -> Bucket -> [(Key, Maybe VClock, c)] -> W -> DW
+            Connection -> Bucket -> [(PutInfo, c)] -> W -> DW
          -> IO ()
 putMany_ = R.putMany_ J.putMany
 {-# INLINE putMany_ #-}

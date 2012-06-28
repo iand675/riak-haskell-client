@@ -44,6 +44,7 @@ import qualified Data.ByteString.Lazy as L
 import qualified Data.Sequence as Seq
 import qualified Network.Riak.Content as C
 import qualified Network.Riak.Request as Req
+import Prelude hiding (pi)
 
 fromContent :: IsContent c => Content -> Maybe c
 fromContent c = case parse parseContent c of
@@ -88,11 +89,11 @@ deriving instance (IsContent a) => IsContent (ResolvableMonoid a)
 -- that the given bucket+key combination does not already exist.  If
 -- you omit a 'T.VClock' but the bucket+key /does/ exist, your value
 -- will not be stored.
-put :: (IsContent c) => Connection -> Bucket -> Key -> Maybe VClock -> c
-    -> W -> DW -> IO ([c], VClock)
-put conn bucket key mvclock val w dw =
+put :: (IsContent c) => Connection -> Bucket -> PutInfo -> c
+    -> W -> DW -> IO (PutResult [c])
+put conn bucket putInfo val w dw =
   putResp =<< exchange conn
-              (Req.put bucket key mvclock (toContent val) w dw True)
+              (Req.put bucket putInfo (toContent val) w dw True)
 
 -- | Store many values.  This may return multiple conflicting siblings
 -- for each value stored.  Choosing among them, and storing a new
@@ -102,18 +103,18 @@ put conn bucket key mvclock val w dw =
 -- that the given bucket+key combination does not already exist.  If
 -- you omit a 'T.VClock' but the bucket+key /does/ exist, your value
 -- will not be stored.
-putMany :: (IsContent c) => Connection -> Bucket -> [(Key, Maybe VClock, c)]
-        -> W -> DW -> IO [([c], VClock)]
+putMany :: (IsContent c) => Connection -> Bucket -> [(PutInfo, c)]
+        -> W -> DW -> IO [PutResult [c]]
 putMany conn b puts w dw =
-  mapM putResp =<< pipeline conn (map (\(k,v,c) -> Req.put b k v (toContent c) w dw True) puts)
+  mapM putResp =<< pipeline conn (map (\(pi,c) -> Req.put b pi (toContent c) w dw True) puts)
 
-putResp :: (IsContent c) => PutResponse -> IO ([c], VClock)
-putResp PutResponse{..} = do
-  case vclock of
-    Nothing -> return ([], VClock L.empty)
+putResp :: (IsContent c) => PutResponse -> IO (PutResult [c])
+putResp (PutResponse content vc k) = do
+  case vc of
+    Nothing -> return $ PutResult { result = [], vclock = Nothing, key = Nothing }
     Just s  -> do
       c <- convert content
-      return (c, VClock s)
+      return $ PutResult { result = c, vclock = Just (VClock s), key = k }
 
 -- | Store a single value, without the possibility of conflict
 -- resolution.
@@ -122,10 +123,10 @@ putResp PutResponse{..} = do
 -- that the given bucket+key combination does not already exist.  If
 -- you omit a 'T.VClock' but the bucket+key /does/ exist, your value
 -- will not be stored, and you will not be notified.
-put_ :: (IsContent c) => Connection -> Bucket -> Key -> Maybe VClock -> c
+put_ :: (IsContent c) => Connection -> Bucket -> PutInfo -> c
     -> W -> DW -> IO ()
-put_ conn bucket key mvclock val w dw =
-  exchange_ conn (Req.put bucket key mvclock (toContent val) w dw False)
+put_ conn bucket putInfo val w dw =
+  exchange_ conn (Req.put bucket putInfo (toContent val) w dw False)
 
 -- | Store many values, without the possibility of conflict
 -- resolution.
@@ -134,10 +135,10 @@ put_ conn bucket key mvclock val w dw =
 -- that the given bucket+key combination does not already exist.  If
 -- you omit a 'T.VClock' but the bucket+key /does/ exist, your value
 -- will not be stored, and you will not be notified.
-putMany_ :: (IsContent c) => Connection -> Bucket -> [(Key, Maybe VClock, c)]
+putMany_ :: (IsContent c) => Connection -> Bucket -> [(PutInfo, c)]
          -> W -> DW -> IO ()
 putMany_ conn b puts w dw =
-  pipeline_ conn . map (\(k,v,c) -> Req.put b k v (toContent c) w dw False) $ puts
+  pipeline_ conn . map (\(pi,c) -> Req.put b pi (toContent c) w dw False) $ puts
 
 -- | Retrieve a value.  This may return multiple conflicting siblings.
 -- Choosing among them is your responsibility.

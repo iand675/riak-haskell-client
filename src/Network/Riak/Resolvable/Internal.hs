@@ -97,8 +97,8 @@ type Get a = Connection -> Bucket -> Key -> R -> IO (Maybe ([a], VClock))
 
 get :: (Resolvable a) => Get a
     -> (Connection -> Bucket -> Key -> R -> IO (Maybe (a, VClock)))
-get doGet conn bucket key r =
-    fmap (first resolveMany) `fmap` doGet conn bucket key r
+get doGet conn bucket k r =
+    fmap (first resolveMany) `fmap` doGet conn bucket k r
 {-# INLINE get #-}
 
 getMany :: (Resolvable a) =>
@@ -117,24 +117,33 @@ getMany doGet conn b ks r =
 -- of both put and putMany below, but we do not (can not?) handle the
 -- stale-vclock case.
 
-type Put a = Connection -> Bucket -> Key -> Maybe VClock -> a -> W -> DW
-           -> IO ([a], VClock)
+type Put a = Connection -> Bucket -> PutInfo -> a -> W -> DW
+           -> IO (PutResult [a])
+
+hasVClock :: PutInfo -> Bool
+hasVClock Nothing = False
+hasVClock (Just (_, mv)) = isJust mv
+{-# INLINE hasVClock #-}
+
+changeVClock :: Maybe VClock -> PutInfo -> PutInfo
+changeVClock c = fmap (\(l,_) -> (l, c))
+{-# INLINE changeVClock #-}
 
 put :: (Resolvable a) => Put a
-    -> Connection -> Bucket -> Key -> Maybe VClock -> a -> W -> DW
-    -> IO (a, VClock)
-put doPut conn bucket key mvclock0 val0 w dw = do
-  let go !i val mvclock
+    -> Connection -> Bucket -> PutInfo -> a -> W -> DW
+    -> IO (PutResult a)
+put doPut conn bucket p val0 w dw = do
+  let go !i val p'
          | i == maxRetries = throwIO RetriesExceeded
          | otherwise       = do
-        (xs, vclock) <- doPut conn bucket key mvclock val w dw
-        case xs of
-          [x] | i > 0 || isJust mvclock -> return (x, vclock)
-          (_:_) -> do debugValues "put" "conflict" xs
-                      go (i+1) (resolveMany' val xs) (Just vclock)
-          []    -> unexError "Network.Riak.Resolvable" "put"
-                   "received empty response from server"
-  go (0::Int) val0 mvclock0
+           pr <- doPut conn bucket p' val w dw
+           case result pr of
+             [x] | i > 0 || hasVClock p' -> return $ pr { result = x }
+             xs@(_:_) -> do debugValues "put" "conflict" xs
+                            go (i+1) (resolveMany' val xs) $ changeVClock (vclock pr) p'
+             []    -> unexError "Network.Riak.Resolvable" "put"
+                      "received empty response from server"
+  go (0::Int) val0 p
 {-# INLINE put #-}
 
 -- | The maximum number of times to retry conflict resolution.
@@ -143,38 +152,38 @@ maxRetries = 64
 {-# INLINE maxRetries #-}
 
 put_ :: (Resolvable a) =>
-        (Connection -> Bucket -> Key -> Maybe VClock -> a -> W -> DW
-                    -> IO ([a], VClock))
-     -> Connection -> Bucket -> Key -> Maybe VClock -> a -> W -> DW
+        (Connection -> Bucket -> PutInfo -> a -> W -> DW
+                    -> IO (PutResult [a]))
+     -> Connection -> Bucket -> PutInfo -> a -> W -> DW
      -> IO ()
-put_ doPut conn bucket key mvclock0 val0 w dw =
-    put doPut conn bucket key mvclock0 val0 w dw >> return ()
+put_ doPut conn bucket p val0 w dw =
+    put doPut conn bucket p val0 w dw >> return ()
 {-# INLINE put_ #-}
 
 modify :: (Resolvable a) => Get a -> Put a
        -> Connection -> Bucket -> Key -> R -> W -> DW -> (Maybe a -> IO (a,b))
        -> IO (a,b)
-modify doGet doPut conn bucket key r w dw act = do
-  a0 <- get doGet conn bucket key r
+modify doGet doPut conn bucket k r w dw act = do
+  a0 <- get doGet conn bucket k r
   (a,b) <- act (fst <$> a0)
-  (a',_) <- put doPut conn bucket key (snd <$> a0) a w dw
-  return (a',b)
+  pr <- put doPut conn bucket (Just (k, (snd <$> a0))) a w dw
+  return (result pr,b)
 {-# INLINE modify #-}
 
 modify_ :: (Resolvable a) => Get a -> Put a
         -> Connection -> Bucket -> Key -> R -> W -> DW -> (Maybe a -> IO a)
         -> IO a
-modify_ doGet doPut conn bucket key r w dw act = do
-  a0 <- get doGet conn bucket key r
+modify_ doGet doPut conn bucket k r w dw act = do
+  a0 <- get doGet conn bucket k r
   a <- act (fst <$> a0)
-  fst <$> put doPut conn bucket key (snd <$> a0) a w dw
+  result <$> put doPut conn bucket (Just (k, (snd <$> a0))) a w dw
 {-# INLINE modify_ #-}
 
 putMany :: (Resolvable a) =>
-           (Connection -> Bucket -> [(Key, Maybe VClock, a)] -> W -> DW
-                       -> IO [([a], VClock)])
-        -> Connection -> Bucket -> [(Key, Maybe VClock, a)] -> W -> DW
-        -> IO [(a, VClock)]
+           (Connection -> Bucket -> [(PutInfo, a)] -> W -> DW
+                       -> IO [PutResult [a]])
+        -> Connection -> Bucket -> [(PutInfo, a)] -> W -> DW
+        -> IO [PutResult a]
 putMany doPut conn bucket puts0 w dw = go (0::Int) [] . zip [(0::Int)..] $ puts0
  where
   go _ acc [] = return . map snd . sortBy (compare `on` fst) $ acc
@@ -186,18 +195,18 @@ putMany doPut conn bucket puts0 w dw = go (0::Int) [] . zip [(0::Int)..] $ puts0
     unless (null conflicts) $
       debugValues "putMany" "conflicts" conflicts
     go (i+1) (ok++acc) conflicts
-  mush (i,(k,mv,c)) (cs,v) =
-      case cs of
-        [x] | i > 0 || isJust mv -> Right (i,(x,v))
-        (_:_) -> Left (i,(k,Just v, resolveMany' c cs))
+  mush (i,(p,c)) r =
+      case result r of
+        [x] | i > 0 || hasVClock p -> Right (i, r { result = x })
+        xs@(_:_) -> Left (i, (changeVClock (vclock r) p, resolveMany' c xs))
         []    -> unexError "Network.Riak.Resolvable" "put"
                  "received empty response from server"
 {-# INLINE putMany #-}
 
 putMany_ :: (Resolvable a) =>
-            (Connection -> Bucket -> [(Key, Maybe VClock, a)] -> W -> DW
-                        -> IO [([a], VClock)])
-         -> Connection -> Bucket -> [(Key, Maybe VClock, a)] -> W -> DW -> IO ()
+            (Connection -> Bucket -> [(PutInfo, a)] -> W -> DW
+                        -> IO [PutResult [a]])
+         -> Connection -> Bucket -> [(PutInfo, a)] -> W -> DW -> IO ()
 putMany_ doPut conn bucket puts0 w dw =
     putMany doPut conn bucket puts0 w dw >> return ()
 {-# INLINE putMany_ #-}

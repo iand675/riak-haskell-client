@@ -21,6 +21,8 @@ module Network.Riak.Types
     , Bucket
     , Key
     , Tag
+    , PutInfo
+    , PutResult(..)
     , VClock(..)
     , Job(..)
     -- * Quorum management

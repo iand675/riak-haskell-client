@@ -85,11 +85,11 @@ get conn bucket key r = Resp.get <$> exchangeMaybe conn (Req.get bucket key r)
 -- that the given bucket+key combination does not already exist.  If
 -- you omit a 'T.VClock' but the bucket+key /does/ exist, your value
 -- will not be stored.
-put :: Connection -> T.Bucket -> T.Key -> Maybe T.VClock
+put :: Connection -> T.Bucket -> T.PutInfo
     -> Content -> W -> DW
-    -> IO (Seq.Seq Content, VClock)
-put conn bucket key mvclock cont w dw =
-  Resp.put <$> exchange conn (Req.put bucket key mvclock cont w dw True)
+    -> IO (PutResult (Seq.Seq Content))
+put conn bucket putInfo cont w dw =
+  Resp.put <$> exchange conn (Req.put bucket putInfo cont w dw True)
 
 -- | Store a single value, without the possibility of conflict
 -- resolution.
@@ -98,11 +98,11 @@ put conn bucket key mvclock cont w dw =
 -- that the given bucket+key combination does not already exist.  If
 -- you omit a 'T.VClock' but the bucket+key /does/ exist, your value
 -- will not be stored, and you will not be notified.
-put_ :: Connection -> T.Bucket -> T.Key -> Maybe T.VClock
+put_ :: Connection -> T.Bucket -> T.PutInfo
      -> Content -> W -> DW
      -> IO ()
-put_ conn bucket key mvclock cont w dw =
-  exchange_ conn (Req.put bucket key mvclock cont w dw False)
+put_ conn bucket putInfo cont w dw =
+  exchange_ conn (Req.put bucket putInfo cont w dw False)
 
 -- | Delete a value.
 delete :: Connection -> T.Bucket -> T.Key -> RW -> IO ()

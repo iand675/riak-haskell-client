@@ -51,6 +51,7 @@ module Network.Riak
     -- * Data management
     , Quorum(..)
     , Resolvable(..)
+    , PutResult(..)
     , get
     , getMany
     , modify
@@ -71,3 +72,4 @@ module Network.Riak
 import Network.Riak.Basic hiding (get, put, put_)
 import Network.Riak.JSON.Resolvable (get, getMany, modify, modify_, put, putMany)
 import Network.Riak.Resolvable (Resolvable(..))
+import Network.Riak.Types (PutResult(..))

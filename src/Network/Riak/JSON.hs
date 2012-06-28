@@ -58,7 +58,7 @@ instance (FromJSON a, ToJSON a) => V.IsContent (JSON a) where
 -- Choosing among them is your responsibility.
 get :: (FromJSON c, ToJSON c) => Connection -> Bucket -> Key -> R
     -> IO (Maybe ([c], VClock))
-get conn bucket key r = fmap convert <$> V.get conn bucket key r
+get conn bucket k r = fmap convert <$> V.get conn bucket k r
 
 getMany :: (FromJSON c, ToJSON c) => Connection -> Bucket -> [Key] -> R
     -> IO [Maybe ([c], VClock)]
@@ -73,10 +73,10 @@ getMany conn bucket ks r = map (fmap convert) <$> V.getMany conn bucket ks r
 -- you omit a 'T.VClock' but the bucket+key /does/ exist, your value
 -- will not be stored.
 put :: (FromJSON c, ToJSON c) =>
-       Connection -> Bucket -> Key -> Maybe VClock -> c
-    -> W -> DW -> IO ([c], VClock)
-put conn bucket key mvclock val w dw =
-    convert <$> V.put conn bucket key mvclock (json val) w dw
+       Connection -> Bucket -> PutInfo -> c
+    -> W -> DW -> IO (PutResult [c])
+put conn bucket p val w dw =
+    convertP <$> V.put conn bucket p (json val) w dw
 
 -- | Store a single value, without the possibility of conflict
 -- resolution.
@@ -86,10 +86,10 @@ put conn bucket key mvclock val w dw =
 -- you omit a 'T.VClock' but the bucket+key /does/ exist, your value
 -- will not be stored, and you will not be notified.
 put_ :: (FromJSON c, ToJSON c) =>
-       Connection -> Bucket -> Key -> Maybe VClock -> c
+       Connection -> Bucket -> PutInfo -> c
     -> W -> DW -> IO ()
-put_ conn bucket key mvclock val w dw =
-    V.put_ conn bucket key mvclock (json val) w dw
+put_ conn bucket p val w dw =
+    V.put_ conn bucket p (json val) w dw
 
 -- | Store many values.  This may return multiple conflicting siblings
 -- for each value stored.  Choosing among them, and storing a new
@@ -100,11 +100,11 @@ put_ conn bucket key mvclock val w dw =
 -- you omit a 'T.VClock' but the bucket+key /does/ exist, your value
 -- will not be stored.
 putMany :: (FromJSON c, ToJSON c) =>
-           Connection -> Bucket -> [(Key, Maybe VClock, c)]
-        -> W -> DW -> IO [([c], VClock)]
+           Connection -> Bucket -> [(PutInfo, c)]
+        -> W -> DW -> IO [PutResult [c]]
 putMany conn bucket puts w dw =
-    map convert <$> V.putMany conn bucket (map f puts) w dw
-  where f (k,v,c) = (k,v,json c)
+    map convertP <$> V.putMany conn bucket (map f puts) w dw
+  where f (p,c) = (p,json c)
 
 -- | Store many values, without the possibility of conflict
 -- resolution.
@@ -114,10 +114,13 @@ putMany conn bucket puts w dw =
 -- you omit a 'T.VClock' but the bucket+key /does/ exist, your value
 -- will not be stored, and you will not be notified.
 putMany_ :: (FromJSON c, ToJSON c) =>
-            Connection -> Bucket -> [(Key, Maybe VClock, c)]
+            Connection -> Bucket -> [(PutInfo, c)]
          -> W -> DW -> IO ()
 putMany_ conn bucket puts w dw = V.putMany_ conn bucket (map f puts) w dw
-  where f (k,v,c) = (k,v,json c)
+  where f (p,c) = (p,json c)
 
 convert :: ([JSON a], VClock) -> ([a], VClock)
 convert = first (map plain)
+
+convertP :: PutResult [JSON a] -> PutResult [a]
+convertP p = p { result = map plain $ result p }
