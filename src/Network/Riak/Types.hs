@@ -24,7 +24,6 @@ module Network.Riak.Types
     , PutInfo
     , PutResult(..)
     , VClock(..)
-    , Job(..)
     -- * Quorum management
     , Quorum(..)
     , RW

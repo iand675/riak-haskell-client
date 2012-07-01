@@ -30,7 +30,6 @@ module Network.Riak.Types.Internal
     , PutInfo
     , PutResult(..)
     , VClock(..)
-    , Job(..)
     -- * Quorum management
     , Quorum(..)
     , DW
@@ -137,12 +136,6 @@ type Key = ByteString
 -- | An application-specific identifier for a link.  See
 -- <http://wiki.basho.com/Links.html> for details.
 type Tag = ByteString
-
--- | A specification of a MapReduce
--- job. <http://wiki.basho.com/MapReduce.html>.
-data Job = JSON ByteString
-         | Erlang ByteString
-           deriving (Eq, Show, Typeable)
 
 -- | An identifier for an inbound or outbound message.
 data MessageTag = ErrorResponse

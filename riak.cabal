@@ -62,6 +62,7 @@ library
     Network.Riak.Debug
     Network.Riak.Escape
     Network.Riak.Functions
+    Network.Riak.MapReduce
     Network.Riak.JSON
     Network.Riak.JSON.Resolvable
     Network.Riak.Request

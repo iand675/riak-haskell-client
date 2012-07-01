@@ -39,9 +39,6 @@ module Network.Riak.Request
     , getBucket
     , SetBucket.SetBucketRequest
     , setBucket
-    -- * Map/reduce
-    , MapReduceRequest
-    , mapReduce
     ) where
 
 import Control.Applicative ((<$>))
@@ -134,8 +131,3 @@ getBucket = GetBucket.GetBucketRequest . escape
 setBucket :: Bucket -> BucketProps -> SetBucket.SetBucketRequest
 setBucket = SetBucket.SetBucketRequest . escape
 {-# INLINE setBucket #-}
-
--- | Create a map-reduce request.
-mapReduce :: Job -> MapReduceRequest
-mapReduce (JSON bs)   = MapReduceRequest bs "application/json"
-mapReduce (Erlang bs) = MapReduceRequest bs "application/x-erlang-binary"

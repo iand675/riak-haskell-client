@@ -55,6 +55,7 @@ import Network.Riak.Protocol.ServerInfo
 import Network.Riak.Types.Internal hiding (MessageTag(..))
 import qualified Data.Foldable as F
 import qualified Data.Sequence as Seq
+import qualified Network.Riak.MapReduce as M
 import qualified Network.Riak.Request as Req
 import qualified Network.Riak.Response as Resp
 import qualified Network.Riak.Types.Internal as T
@@ -139,8 +140,8 @@ setBucket conn bucket props = exchange_ conn $ Req.setBucket bucket props
 
 -- | Run a 'MapReduce' job.  Its result is consumed via a strict left
 -- fold.
-mapReduce :: Connection -> Job -> (a -> MapReduce -> a) -> a -> IO a
-mapReduce conn job f z0 = loop z0 =<< (exchange conn . Req.mapReduce $ job)
+mapReduce :: Connection -> M.Job -> (a -> MapReduce -> a) -> a -> IO a
+mapReduce conn job f z0 = loop z0 =<< (exchange conn . M.mapReduce $ job)
   where
     loop z mr = do
       let !z' = f z mr
