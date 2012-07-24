@@ -53,48 +53,44 @@ flag developer
 library
   hs-source-dirs: src
 
-  exposed-modules:     
+  exposed-modules:
     Network.Riak
     Network.Riak.Basic
     Network.Riak.Connection
-    Network.Riak.Connection.Pool
     Network.Riak.Content
     Network.Riak.Debug
     Network.Riak.Escape
     Network.Riak.Functions
     Network.Riak.MapReduce
-    Network.Riak.JSON
-    Network.Riak.JSON.Resolvable
     Network.Riak.Request
-    Network.Riak.Resolvable
     Network.Riak.Response
     Network.Riak.Types
-    Network.Riak.Value
-    Network.Riak.Value.Resolvable
 
-  other-modules:       
+  other-modules:
     Network.Riak.Connection.Internal
     Network.Riak.Connection.NoPush
-    Network.Riak.Resolvable.Internal
     Network.Riak.Tag
     Network.Riak.Types.Internal
-  
-  build-depends:       
-    aeson >= 0.3.2.4,
+
+  build-depends:
+    aeson >= 0.6,
     attoparsec >= 0.8.5.3,
-    base == 4.*,
-    binary,
+    base >= 4,
     blaze-builder,
-    bytestring,
+    binary,
+    bytestring >= 0.9.0.0,
+    conduit,
     containers,
-    network >= 2.3,
-    resource-pool >= 0.1.0.2,
+    data-default,
+    network,
+    pool-conduit >= 0.1,
     protocol-buffers >= 2.0.5,
     pureMD5,
     random,
     riak-protobuf >= 0.17.0.0,
-    text >= 0.11.0.6,
-    time
+    text >= 0.11.0.0,
+    time,
+    vector
 
   if flag(debug)
     cpp-options: -DASSERTS -DDEBUG
@@ -108,4 +104,4 @@ library
 
 source-repository head
   type:     git
-  location: http://github.com/bos/riak-haskell-client
+  location: http://github.com/iand675/riak-haskell-client

@@ -34,7 +34,7 @@ data Transform from to where
 
 instance ToJSON (Transform a b) where
   toJSON = toJSON . toJSONArray
-  
+
 toJSONArray :: Transform a b -> [Value]
 toJSONArray (l :> r) = toJSONArray l ++ toJSONArray r
 toJSONArray IntToString = [toJSON ["int_to_string" :: Text]]

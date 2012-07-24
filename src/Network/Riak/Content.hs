@@ -18,12 +18,9 @@ module Network.Riak.Content
     -- * Functions
     , empty
     , binary
-    , json
     , link
     ) where
 
-import Data.Aeson.Encode (encode)
-import Data.Aeson.Types (ToJSON)
 import Network.Riak.Protocol.Content (Content(..))
 import Network.Riak.Types.Internal (Bucket, Key, Tag)
 import qualified Data.ByteString.Lazy.Char8 as L
@@ -55,8 +52,3 @@ binary bs = empty { value = bs
                   , content_type = Just "application/octet-stream"
                   }
 
--- | Content encoded as @application/json@.
-json :: ToJSON a => a -> Content
-json j = empty { value = encode j
-               , content_type = Just "application/json"
-               }

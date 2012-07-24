@@ -50,16 +50,11 @@ module Network.Riak
     , getServerInfo
     -- * Data management
     , Quorum(..)
-    , Resolvable(..)
     , PutResult(..)
     , get
-    , getMany
-    , modify
-    , modify_
     , delete
     -- ** Low-level modification functions
     , put
-    , putMany
     -- * Metadata
     , listBuckets
     , foldKeys
@@ -69,7 +64,6 @@ module Network.Riak
     , mapReduce
     ) where
 
-import Network.Riak.Basic hiding (get, put, put_)
-import Network.Riak.JSON.Resolvable (get, getMany, modify, modify_, put, putMany)
-import Network.Riak.Resolvable (Resolvable(..))
+import Network.Riak.Basic
 import Network.Riak.Types (PutResult(..))
+
