@@ -9,7 +9,6 @@ module Network.Riak.MapReduce
   ) where
 
 import Data.Aeson
-import Data.Aeson.TH
 import Data.ByteString.Lazy.Char8 (ByteString)
 import Data.Char
 import Data.Text (Text)

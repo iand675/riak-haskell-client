@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
 module Network.Riak.Protocol.GetServerInfoRequest (GetServerInfoRequest(..)) where
 import Prelude ((+), (/))
