@@ -12,11 +12,12 @@ if [[ -z "$hprotoc" ]]; then
     exit 1
 fi
 
-sed -e 's/Rpb//g' -e 's/Req[[:>:]]/Request/g' -e 's/Resp[[:>:]]/Response/g' \
+sed -e 's/Rpb//g' -e 's/Req\>/Request/g' -e 's/Resp\>/Response/g' \
     -e 's/MapRedR/MapReduceR/g' -e 's/DelR/DeleteR/' -e 's/ClientId/ClientID/' \
     -e 's/GetServerInfoResponse/ServerInfo/g' \
     -e 's/MapReduceResponse/MapReduce/g' \
     -e 's/import "riak.proto";//g' \
+    -e 's/_\([a-z]\)/\u\1/g' \
     src/riak.proto src/riak_kv.proto src/riak_search.proto > src/Protocol.proto
 
 (cd src && hprotoc -p Network.Riak Protocol.proto)
